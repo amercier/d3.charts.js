@@ -1,0 +1,8 @@
+{
+  "name": "d3.charts.js",
+  "version": "0.0.0",
+  "dependencies": {
+    "d3": "~3.2.0",
+    "requirejs": "~2.1.6"
+  }
+}
