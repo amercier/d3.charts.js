@@ -5,8 +5,13 @@ define(['./error/abstractImplementation'], function(abstractImplementation) {
 
   }
 
-  var __ = AbstractRenderer.prototype;
+  AbstractRenderer.defaultOptions = {
+      tickSize   : 6,
+      subTickSize: 3
+    };
 
-  __.renderLine = abstractImplementation('renderLine');
+  var prototype = AbstractRenderer.prototype;
+
+  prototype.renderLine = abstractImplementation('renderLine');
 
 });

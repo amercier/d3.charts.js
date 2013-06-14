@@ -17,7 +17,7 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
   function SVGRenderer(container, options) {
 
     var e = this.element = d3.select(container).append('svg'),
-        __;
+        prototype;
     options = options || {};
 
     if('width' in options) {
@@ -34,7 +34,29 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
   }
 
   inherit(AbstractRenderer, SVGRenderer);
-  __ = SVGRenderer.prototype;
+  prototype = SVGRenderer.prototype;
+
+  prototype.applyAttributes = function applyAttributes(e, options) {
+
+    if('attributes' in options) {
+      Object.keys(options.attributes).forEach(function (attributeName) {
+        e = e.attr(attributeName, options.attributes.attributeName);
+      });
+    }
+
+    return e;
+  };
+
+  prototype.applyStyles = function applyStyles(e, options) {
+
+    if('styles' in options) {
+      Object.keys(options.styles).forEach(function (attributeName) {
+        e = e.style(attributeName, options.styles.attributeName);
+      });
+    }
+
+    return e;
+  };
 
   /**
    * Render a path
@@ -52,7 +74,7 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
    *
    * @return {SVGRenderer} Returns this object to provide daisy-chaining capability
    */
-  __.renderPath = function renderPath(path, options) {
+  prototype.renderPath = function renderPath(path, options) {
 
     var e = this.element.append('path').datum(data);
 
@@ -66,19 +88,8 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
       path = path.interpolate(options.interpolation);
     }
 
-    // options.attributes
-    if('attributes' in options) {
-      Object.keys(options.attributes).forEach(function (attributeName) {
-        e = e.attr(attributeName, options.attributes.attributeName);
-      });
-    }
-
-    // options.styles
-    if('styles' in options) {
-      Object.keys(options.styles).forEach(function (attributeName) {
-        e = e.style(attributeName, options.styles.attributeName);
-      });
-    }
+    e = this._applyAttributes(e, options);
+    e = this._applyStyles(e, options);
 
     // path points
     e = e.attr(d, path);
@@ -102,7 +113,7 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
    *
    * @return {SVGRenderer} Returns this object to provide daisy-chaining capability
    */
-  __.renderLine = function renderLine(data, xDataGenerator, yDataGenerator, options) {
+  prototype.renderLine = function renderLine(data, xDataGenerator, yDataGenerator, options) {
 
     // 1. Create a line
     var line = d3.svg.line()
@@ -120,6 +131,7 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
    * @param {Array}    data            The data array
    * @param {Function} xDataGenerator  Data generator for X axis. Eg: function(d) { return xScale(d.date); }
    * @param {Function} yDataGenerator  Data generator for Y axis. Eg: function(d) { return yScale(d.value); }
+   * @param {Number}   height          Height of the displayable area
    * @param {Object}   options         Options
    *
    * @param {Function} options.defined       Function that determines whether a datum is defined or not. Eg: function(d) { return d.CpuUsed !== null; }
@@ -129,16 +141,58 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
    *
    * @return {SVGRenderer} Returns this object to provide daisy-chaining capability
    */
-   __.renderArea = function (data, xDataGenerator, yDataGenerator, options) {
+   prototype.renderArea = function renderArea(data, xDataGenerator, yDataGenerator, height, options) {
 
     // 1. Create an area
     var area = d3.svg.area()
         .x(xDataGenerator)
-        .y(yDataGenerator);
+        .y0(height)
+        .y1(yDataGenerator);
 
 
     // 2. Render the line as a path
     return this._renderPath(area, options);
+  };
+
+  /**
+   * Render an Axis
+   *
+   * @param
+   *
+   * @param {String} options.orientation Axis orientation: top|right|bottom|left
+   * @param {Number} options.tickSize    Tick size
+   * @param {Number} options.subTickSize Sub-tick size (0 to disable)
+   *
+   * @return {SVGRenderer} Returns this object to provide daisy-chaining capability
+   */
+  prototype.renderAxis = function renderAxis(scale, options) {
+
+    var axis = d3.svg.axis()
+        .scale(x);
+
+    if('orientation' in options) {
+      axis = axis.orient(options.orientation);
+    }
+
+    if(! ('tickSize' in options)) {
+      options.tickSize = AbstractRenderer.defaultOptions.tickSize;
+    }
+    if(! ('subTickSize' in options)) {
+      options.subTickSize = AbstractRenderer.defaultOptions.subTickSize;
+    }
+    axis = axis
+        .tickSize(options.tickSize, options.subTickSize, 0)
+        .tickSubdivide(!options.subTickSize);
+
+    var e = svg.append('g')
+    e = this.applyAttributes(e, options);
+    e = this.applyStyles(e, options);
+
+    e = e
+        .attr('transform', 'translate(0,' + height + ')')
+        .call(axis);
+
+    return this;
   };
 
   return SVGRenderer;
