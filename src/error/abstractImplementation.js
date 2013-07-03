@@ -1,7 +1,7 @@
-define(['./MissingImplementation'], function(MissingImplementationError) {
+define(['./MissingImplementationError'], function(MissingImplementationError) {
 
   return function abstractImplementation(functionName, methodName) {
-    throw new MissingImplementationError(methodName);
+    throw new MissingImplementationError(functionName, methodName);
   };
 
 });

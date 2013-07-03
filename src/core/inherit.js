@@ -42,10 +42,38 @@ define([], function() {
   /**
    * Inheritance method
    */
-  return function inherhit(parentFunction, childFunction) {
-    __.prototype = parentFunction.prototype;
-    childFunction.prototype = new __();
-    childFunction.prototype.constructor = childFunction;
+  return function inherhit(childFunction, parentFunction, mixins) {
+
+    // Inheritance
+    if(parentFunction) {
+      __.prototype = parentFunction.prototype;
+      childFunction.prototype = new __();
+      childFunction.prototype.constructor = childFunction;
+    }
+
+    // Mixins
+    if(mixins) {
+      mixins.forEach(function (mixin) {
+
+        var prototypes  = [],
+            prototype   = mixin.prototype,
+            objectProto = Object.prototype;
+
+        while(prototype !== objectProto) {
+          prototypes.splice(0, 0, prototype);
+          prototype = prototype.__proto__;
+        }
+
+        prototypes.forEach(function (proto) {
+          for (var i in proto) {
+            if(proto.hasOwnProperty(i)) {
+              childFunction.prototype[i] = proto[i];
+            }
+          }
+        });
+
+      });
+    }
   };
 
 });

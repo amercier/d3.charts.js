@@ -1,22 +1,24 @@
 
-define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
+define(['../core/inherit', './AbstractRenderer'], function(inherit, AbstractRenderer) {
 
   /**
-   * Create a new SVG render
+   * Create a new SVG renderer
    *
-   * @param {Element} container HTML element that will contain the newly created `<svg>` element
    * @param {Object}  options   Options
    *
-   * @param {Number} options.width  Width  of the `<svg>` element
-   * @param {Number} options.height height of the `<svg>` element
-   * @param {Number} options.x      Left offset of the `<svg>` element
-   * @param {Number} options.y      Top offset  of the `<svg>` element
+   * @param {Element} options.container HTML element that will contain the newly created `<svg>` element
+   * @param {Number}  options.width     Width  of the `<svg>` element
+   * @param {Number}  options.height    height of the `<svg>` element
+   * @param {Number}  options.x         Left offset of the `<svg>` element
+   * @param {Number}  options.y         Top offset  of the `<svg>` element
    *
    * @constructor
    */
-  function SVGRenderer(container, options) {
+  function SVGRenderer(options) {
 
-    var e = this.element = d3.select(container).append('svg'),
+    AbstractRenderer.call(this, options);
+
+    var e = this.element = d3.select(this.options.container).append('svg'),
         prototype;
     options = options || {};
 
@@ -33,14 +35,14 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
     }
   }
 
-  inherit(AbstractRenderer, SVGRenderer);
+  inherit( SVGRenderer, AbstractRenderer);
   prototype = SVGRenderer.prototype;
 
   prototype.applyAttributes = function applyAttributes(e, options) {
 
     if('attributes' in options) {
       Object.keys(options.attributes).forEach(function (attributeName) {
-        e = e.attr(attributeName, options.attributes.attributeName);
+        e = e.attr(attributeName, options.attributes[attributeName]);
       });
     }
 
@@ -50,8 +52,8 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
   prototype.applyStyles = function applyStyles(e, options) {
 
     if('styles' in options) {
-      Object.keys(options.styles).forEach(function (attributeName) {
-        e = e.style(attributeName, options.styles.attributeName);
+      Object.keys(options.styles).forEach(function (styleName) {
+        e = e.style(styleName, options.styles[styleName]);
       });
     }
 
@@ -167,12 +169,13 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
    */
   prototype.renderAxis = function renderAxis(scale, options) {
 
-    var axis = d3.svg.axis()
-        .scale(x);
-
-    if('orientation' in options) {
-      axis = axis.orient(options.orientation);
+    if( !('orientation' in options) ) {
+      options.orientation = 'bottom';
     }
+
+    var axis = d3.svg.axis()
+        .scale(scale)
+        .orient(options.orientation);
 
     if(! ('tickSize' in options)) {
       options.tickSize = AbstractRenderer.defaultOptions.tickSize;
@@ -184,15 +187,31 @@ define(['../core/inherit', './Abstract'], function(AbstractRenderer) {
         .tickSize(options.tickSize, options.subTickSize, 0)
         .tickSubdivide(!options.subTickSize);
 
-    var e = svg.append('g')
+    var e = this.element.append('g');
     e = this.applyAttributes(e, options);
     e = this.applyStyles(e, options);
 
+    var isVertical = ['left','right'].indexOf(options.orientation) !== -1;
+
     e = e
-        .attr('transform', 'translate(0,' + height + ')')
+        .attr('transform', 'translate(' + (options.x || 0) + ',' + (options.y || 0) + ')')
         .call(axis);
 
     return this;
+
+  /*
+    var axis = d3.svg.axis()
+        .scale(scale)
+        .orient("bottom")
+        .tickSubdivide(true)
+        .tickSize(6, 3, 0);
+
+    this.element.append("g")
+        .attr('class', 'axis')
+        .attr('transform', 'translate(100, 100)')
+        .call(axis);
+        */
+
   };
 
   return SVGRenderer;
